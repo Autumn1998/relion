@@ -114,8 +114,8 @@ __global__ void backProjOnGPU(Projection *prj,Volume *vol,double *x_coef,double 
 	if(z!=vol->Zstart) return;
 	if(z>=vol->Zend) return;
 	int x,y,index,angle,n;	
-	test[z] = 1;
-	for(y=vol->Ystart;y<vol->Ystart+vol->Y;y++)
+	test[z-vol->Zstart] = 1;
+	for(y=vol->Ystart;y<100;y++)
 	{
 		for(x=vol->Xstart;x<0;x++)
 		{
@@ -157,12 +157,13 @@ __global__ void backProjOnGPU(Projection *prj,Volume *vol,double *x_coef,double 
 					dividend += x_min_del*y_min_del;
 				}
 			}
-			index = (x-vol->Xstart)+(y-vol->Ystart)*vol->X+(z-vol->Zstart)*vol->X*vol->Y;
-			printf("%d\n",index);
 			if(dividend!=0.0f)
 			{
+				index = (x-vol->Xstart)+(y-vol->Ystart)*vol->X+(z-vol->Zstart)*vol->X*vol->Y;
+				//atomicExch(&(vol_real[index]),(float)(divisor/dividend));
+				//atomicAdd(&vol_real[1], (float)(divisor/dividend));
 				vol_real[index] = (float)(divisor/dividend);
-				//printf("vol_read[%d]:%f\n",index,vol_real[index]);
+				//printf("vol_real[%d]:%f\n",index,vol_real[index]);
 			}
 		}
 		
@@ -244,8 +245,9 @@ int main(int argc,char *argv[])
 	cudaMallocManaged((void **)&prj_real,sizeof(float)*PrjXYAngN);
 	memset(prj_real, 0 , sizeof(float)*PrjXYAngN);
 	/*for output file*/
+	printf("vol_pixel_num:%d\n",vol_pixel_num);
 	cudaMallocManaged((void **)&vol_real,sizeof(float)*vol_pixel_num);
-	memset(vol_real, 0 , sizeof(float)*vol_pixel_num);	
+	//memset(vol_real, 0 , sizeof(float)*vol_pixel_num);	
 	read_all_data(in_head,prj_real, in_addr);
 /********************************************************************/
 
